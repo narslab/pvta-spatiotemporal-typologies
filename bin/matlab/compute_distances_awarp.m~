@@ -1,0 +1,63 @@
+fptest1 = "../../tables/pvta-data-exploration/one-week-hourly-aggregated.csv";
+fptest2 = "../../tables/pvta-data-exploration/one-week-1-min-aggregated.csv";
+fptest3 = "../../tables/pvta-data-exploration/one-week-5-mins-aggregated.csv";
+
+% tic
+% computeDM(fptest1, 0, 1440);
+% toc
+% tic
+% computeDM(fptest2, 0, 1440);
+% toc
+tic
+computeDM(fptest3, 0, 1440);
+toc
+
+
+function computeDM(filepath, constrained, window)
+    tablename = split(filepath,'/');
+    tablename = tablename(end);
+    df = readmatrix(filepath);
+    len = size(df, 1) - 1; % first row contains labels
+    obs = size(df, 2); % first row contains labels
+
+    dd = zeros(obs, obs);
+    dd(1,:) = df(1,:); % set labels to first row
+    dd(:,1) = dd(1,:);
+
+    for i = 2:obs
+        x = df(:,i);
+        x = x(2:end);
+        notnanindexx = ~isnan(x);
+        x = x(notnanindexx);
+        x(1) = 1; x(len) = 1; 
+        X = toSparseTS(x);    
+        for j = 2:obs
+            if j > i
+                y = df(2:end,j);         
+                notnanindexy = ~isnan(y);
+                y = y(notnanindexy);
+                %a requirement of the algorithm. First and last values must be
+                %positive. This is a benign requirement.            
+                y(1) = 1; y(len) = 1; 
+
+                %This step converts the signal to encode runs of zeros in one number
+                Y = toSparseTS(y);
+
+                %Check for a rare empty sequence
+                if isempty(X) || isempty(Y)
+                    continue;
+                end
+                if constrained==1
+                    d = AWARP(X,Y); %upper bounded
+                    prefix = append('awarp-constrained-w', string(window),'-distance-matrix-');
+                else
+                    d = ConstrainedAWARP(X,Y,window);
+                    prefix = 'awarp-distance-matrix-';
+                end
+                dd(i,j) = d;            
+            end
+        end
+    end    
+    distmatrixname = append('../../tables/', prefix, tablename);
+    writematrix(dd, distmatrixname)
+end

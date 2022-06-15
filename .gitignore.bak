@@ -1,0 +1,22 @@
+data/raw/*
+data/temp/*
+results/*
+results/April-ipf-route-level-optimized-matrices-MAPE/*
+results/April-ipf-route-level-optimized-matrices-RMSE/*
+.ipynb_checkpoints
+## Core latex/pdflatex auxiliary files:
+auto
+*.ttt
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+cache
